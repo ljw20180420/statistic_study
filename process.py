@@ -37,6 +37,29 @@ def get_data(data_dir: os.PathLike) -> pd.DataFrame:
 
         dfs.append(df)
 
+    # df = (
+    #     pd.concat(dfs)
+    #     .value_counts(["sgrna", "cas", "cellline", "chip", "bio_rep", "tech_rep"])
+    #     .reset_index()
+    #     .query("count > 1")[["cas", "count"]]
+    #     .value_counts()
+    # )
+
+    # df = (
+    #     pd.concat(dfs)
+    #     .groupby(["sgrna", "cas", "cellline", "chip", "bio_rep", "tech_rep"])["tem_1"]
+    #     .min()
+    #     .reset_index(drop=False)
+    #     .groupby(["sgrna", "cas"])["tem_1"]
+    #     .mean()
+    #     .reset_index(drop=False)
+    #     .pivot(
+    #         columns=["cas"],
+    #         values="tem_1",
+    #         index="sgrna",
+    #     )
+    # ).reset_index(drop=False)
+
     df = (
         (pd.concat(dfs).groupby(["sgrna", "cas"])["tem_1"].mean())
         .reset_index(drop=False)

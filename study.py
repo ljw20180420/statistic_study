@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from scipy.stats import (
     ttest_ind,
     mannwhitneyu,
@@ -108,13 +109,19 @@ for cas in ["spymac", "ispymac"]:
     ######################################
     result_dict["b"].append(cas)
     result_dict["method"].append("binomial-test")
-    alternative = "less"
+    alternative = "greater"
     result_dict["alternative"].append(alternative)
     result_dict["p-value"].append(
         binomtest(
-            (a > b).sum().item(), len(a), p=0.5, alternative=alternative
+            (a > b).sum().item(),
+            ((a > b).sum().item() + (a < b).sum().item()),
+            p=0.5,
+            alternative=alternative,
         ).pvalue.item()
     )
+
+    # plt.close()
+    # (a - b).hist(bins=30).get_figure().savefig(f"{cas}_diff_hist.png")
 
     #######################################
     # The t-test on two related samples (or the so-called paired t-test).
