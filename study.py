@@ -15,6 +15,14 @@ from scipy.stats import (
 )
 from scipy.stats import PermutationMethod
 from process import get_data
+from plotnine import (
+    ggplot,
+    aes,
+    geom_violin,
+    geom_sina,
+    geom_boxplot,
+    scale_color_manual,
+)
 
 methods = ["t-test-ind", "Welch-test", "Yuen-test", "t-test-rel"]
 # methods = [
@@ -36,6 +44,24 @@ for target in ["tem_1", "tem_2", "tem_3", "tem_4"]:
         mut_fre_x_thres={"spycas9": 0.08, "spymac": 0.02, "ispymac": 0.02},
     )
     df.to_csv(f"{target}.csv", index=False)
+    (
+        ggplot(
+            df.melt(
+                id_vars="sgrna",
+                value_vars=["spycas9", "spymac", "ispymac"],
+                var_name="cas",
+                value_name=target,
+            ),
+            mapping=aes(x="cas", y=target),
+        )
+        + geom_violin()
+        + geom_sina(mapping=aes(fill="cas", color="cas"), alpha=0.01)
+        + geom_boxplot(width=0.05, outlier_alpha=0.0)
+        + scale_color_manual(
+            # values={"spycas9": "#FF0000", "spymac": "#00FF00", "ispymac": "#0000FF"}
+            values=["#FF0000", "#00FF00", "#0000FF"]
+        )
+    ).save(f"{target}.png")
     a = df["spycas9"]
     result_dict = {"b": [], "method": [], "alternative": [], "p-value": []}
     for cas in ["spymac", "ispymac"]:
