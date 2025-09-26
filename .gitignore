@@ -1,4 +1,6 @@
 __pycache__
 files_for_templated
+tem_nofilter
 result.csv
 *.png
+*.csv

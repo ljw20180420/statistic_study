@@ -6,7 +6,9 @@ import pandas as pd
 import pathlib
 
 
-def get_data(data_dir: os.PathLike) -> pd.DataFrame:
+def get_data(
+    data_dir: os.PathLike, target: str, sum_x_thres: int, mut_fre_x_thres: dict
+) -> pd.DataFrame:
     data_dir = pathlib.Path(os.fspath(data_dir))
     dfs = []
     for file in os.listdir(data_dir):
@@ -19,15 +21,20 @@ def get_data(data_dir: os.PathLike) -> pd.DataFrame:
         ):
             continue
 
-        df = pd.read_csv(data_dir / file, header=0)
         if re.search(r"^36t-", file) or re.search(r"^B2-", file):
-            df["cas"] = "spymac"
+            cas = "spymac"
         elif re.search(r"^A2-", file) or re.search(r"^D2-", file):
-            df["cas"] = "spycas9"
+            cas = "spycas9"
         elif re.search(r"^i10t-", file):
-            df["cas"] = "ispymac"
+            cas = "ispymac"
         else:
             raise ValueError("Unexpected sample")
+
+        df = pd.read_csv(data_dir / file, header=0)
+        df["cas"] = cas
+
+        df = df.loc[df["sum_x"] > sum_x_thres]
+        df = df.loc[df["mut_fre_x"] > mut_fre_x_thres[cas]]
 
         mat = re.search(r"([^-]+)-[^-\d](\d)n?+-(\d)-wt(\d)", file)
         df["cellline"] = mat.group(1)
@@ -45,29 +52,30 @@ def get_data(data_dir: os.PathLike) -> pd.DataFrame:
     #     .value_counts()
     # )
 
-    # df = (
-    #     pd.concat(dfs)
-    #     .groupby(["sgrna", "cas", "cellline", "chip", "bio_rep", "tech_rep"])["tem_1"]
-    #     .min()
-    #     .reset_index(drop=False)
-    #     .groupby(["sgrna", "cas"])["tem_1"]
-    #     .mean()
-    #     .reset_index(drop=False)
-    #     .pivot(
-    #         columns=["cas"],
-    #         values="tem_1",
-    #         index="sgrna",
-    #     )
-    # ).reset_index(drop=False)
-
     df = (
-        (pd.concat(dfs).groupby(["sgrna", "cas"])["tem_1"].mean())
+        pd.concat(dfs)
+        .groupby(["sgrna", "cas", "cellline", "chip", "bio_rep", "tech_rep"])[target]
+        .min()
+        .reset_index(drop=False)
+        .groupby(["sgrna", "cas"])[target]
+        .mean()
         .reset_index(drop=False)
         .pivot(
             columns=["cas"],
-            values="tem_1",
+            values=target,
             index="sgrna",
         )
-    )
+    ).reset_index(drop=False)
+
+    # df = (
+    #     (pd.concat(dfs).groupby(["sgrna", "cas"])[target].mean())
+    #     .reset_index(drop=False)
+    #     .pivot(
+    #         columns=["cas"],
+    #         values=target,
+    #         index="sgrna",
+    #     )
+    #     .reset_index()
+    # )
 
     return df
