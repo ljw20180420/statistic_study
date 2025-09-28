@@ -21,7 +21,10 @@ from plotnine import (
     geom_violin,
     geom_sina,
     geom_boxplot,
+    geom_point,
+    scale_x_discrete,
     scale_color_manual,
+    scale_fill_manual,
 )
 
 methods = ["t-test-ind", "Welch-test", "Yuen-test", "t-test-rel"]
@@ -57,11 +60,24 @@ for target in ["tem_1", "tem_2", "tem_3", "tem_4"]:
         + geom_violin()
         + geom_sina(mapping=aes(fill="cas", color="cas"), alpha=0.01)
         + geom_boxplot(width=0.05, outlier_alpha=0.0)
+        + scale_x_discrete(limits=["spycas9", "spymac", "ispymac"])
         + scale_color_manual(
-            # values={"spycas9": "#FF0000", "spymac": "#00FF00", "ispymac": "#0000FF"}
-            values=["#FF0000", "#00FF00", "#0000FF"]
+            values={"spycas9": "#FF0000", "spymac": "#00FF00", "ispymac": "#0000FF"}
+        )
+        + scale_fill_manual(
+            values={"spycas9": "#FF0000", "spymac": "#00FF00", "ispymac": "#0000FF"}
+            # values=["#FF0000", "#00FF00", "#0000FF"],
         )
     ).save(f"{target}.png")
+    for cas in ["spycas9", "spymac", "ispymac"]:
+        (
+            ggplot(
+                df[[cas]].fillna(0.0).assign(sgRNA_idx=lambda df: np.arange(len(df))),
+                mapping=aes(x=cas, y="sgRNA_idx"),
+            )
+            + geom_point()
+        ).save(f"{cas}_{target}.png")
+
     a = df["spycas9"]
     result_dict = {"b": [], "method": [], "alternative": [], "p-value": []}
     for cas in ["spymac", "ispymac"]:
